@@ -246,7 +246,7 @@ class ResamplerInstruct(nn.Module):
                 last_linear.weight.copy_(random_values)
 
     def forward(self, x, new_input):
-                
+
         x_input = self.proj_in(x)
         latents = self.latents.repeat(x_input.size(0), 1, 1)
         new_input_transformed = self.proj_new_input(new_input)
@@ -334,10 +334,10 @@ class ResamplerInstructBigger(nn.Module):
                 last_linear.weight.copy_(random_values)
 
     def forward(self, x, new_input,prompt_input):
-                
+
         x_input = self.proj_in(x)
         latents = self.latents.repeat(x_input.size(0), 1, 1)
-        
+
         new_input_transformed = self.proj_new_input(new_input)
         prompt_input_transformed = self.proj_prompt_input(prompt_input)
 

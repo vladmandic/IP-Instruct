@@ -1,32 +1,18 @@
 import os
 from typing import List
-import torch.nn as nn
-
 import torch
-from PIL import Image
+import torch.nn as nn
 from safetensors import safe_open
+from transformers import CLIPImageProcessor, CLIPVisionModelWithProjection,CLIPTokenizer,CLIPTextModel
+from PIL import Image
+
+from .ip_adapter import IPAdapter
 from .ip_joint_attention import IPJointAttnProcessor2_0 , JointAttnProcessor2_0
 from .joint_attention_block_modified import JointTransformerBlock_IP
-from PIL import Image
-from safetensors import safe_open
-from transformers import CLIPImageProcessor, CLIPVisionModelWithProjection,AutoImageProcessor,AutoModel,CLIPTokenizer,CLIPTextModel
-from .utils import is_torch2_available,get_generator
-
-#if is_torch2_available():
-# from .attention_processor import (
-#     AttnProcessor2_0 as AttnProcessor,
-# )
-# from .attention_processor import (
-#     CNAttnProcessor2_0 as CNAttnProcessor,
-# )
-# from .attention_processor import (
-#     IPAttnProcessor2_0 as IPAttnProcessor,
-# )
-#else:
-#    from .attention_processor import AttnProcessor, CNAttnProcessor, IPAttnProcessor
-from .resampler_Instruct import ResamplerInstruct,MLP,ResamplerInstructBigger
-from ip_adapter.ip_adapter import IPAdapter
+from .resampler_Instruct import ResamplerInstructBigger
 from .resampler_SD3 import ResamplerSD3,ResamplerSD3_Instruct
+from .utils import get_generator
+
 
 class IPAdapterInstruct(IPAdapter):
     """IP-Adapter with fine-grained features"""
@@ -65,10 +51,9 @@ class IPAdapterInstruct(IPAdapter):
                         state_dict["ip_adapter"][key.replace("ip_adapter.", "")] = f.get_tensor(key)
         else:
             state_dict = torch.load(self.ip_ckpt, map_location="cpu")
-        print(state_dict["image_proj"].keys(),state_dict["ip_adapter"].keys())
-        print(self.image_proj_model.load_state_dict(state_dict["image_proj"],strict=False))
+        self.image_proj_model.load_state_dict(state_dict["image_proj"],strict=False)
         ip_layers = torch.nn.ModuleList(self.pipe.unet.attn_processors.values())
-        print(ip_layers.load_state_dict(state_dict["ip_adapter"],strict=False))
+        ip_layers.load_state_dict(state_dict["ip_adapter"],strict=False)
 
 
     def init_proj(self):
@@ -85,7 +70,6 @@ class IPAdapterInstruct(IPAdapter):
             ff_mult_secondary=2,
         ).to(self.device, dtype=torch.float16)
 
-  
         return image_proj_model
 
     @torch.inference_mode()
